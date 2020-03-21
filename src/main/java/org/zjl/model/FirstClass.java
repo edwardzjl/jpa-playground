@@ -1,6 +1,7 @@
 package org.zjl.model;
 
 import lombok.*;
+import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -22,7 +23,8 @@ public class FirstClass {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "key_field")
+    @NaturalId
+    @Column(name = "key_field", unique = true)
     private String keyField;
 
     @Column(name = "foo_field")
@@ -41,7 +43,8 @@ public class FirstClass {
     }
 
     public void clearRelations() {
-        secondClassInstances.forEach(relation -> relation.getSecondClass().getFirstClassInstances().remove(relation));
+        secondClassInstances.forEach(relation ->
+                relation.getSecondClass().getFirstClassInstances().remove(relation));
         secondClassInstances.clear();
     }
 

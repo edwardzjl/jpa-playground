@@ -6,6 +6,9 @@ import org.zjl.model.SecondClass;
 
 import java.util.Optional;
 
+/**
+ * @author Junlin Zhou
+ */
 @Repository
 public interface SecondClassRepo extends JpaRepository<SecondClass, Long> {
 
