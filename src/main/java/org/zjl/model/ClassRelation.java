@@ -1,8 +1,7 @@
 package org.zjl.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -19,10 +18,16 @@ public class ClassRelation {
     @EmbeddedId
     private ClassRelationId id;
 
+    @JsonIgnore
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     @ManyToOne
     @MapsId("firstClassId")
     private FirstClass firstClass;
 
+    @JsonIgnore
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     @ManyToOne
     @MapsId("secondClassId")
     private SecondClass secondClass;
@@ -33,6 +38,9 @@ public class ClassRelation {
         this.id = new ClassRelationId(firstClass.getId(), secondClass.getId());
     }
 
+    public ClassRelation(SecondClass secondClass, FirstClass firstClass) {
+        this(firstClass, secondClass);
+    }
 
     @Data
     @NoArgsConstructor

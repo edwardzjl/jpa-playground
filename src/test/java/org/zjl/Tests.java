@@ -15,6 +15,7 @@ import org.zjl.dao.SecondClassRepo;
 import org.zjl.model.FirstClass;
 import org.zjl.model.SecondClass;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 
 
@@ -42,13 +43,23 @@ public class Tests {
     @Autowired
     private ClassRelationRepo classRelationRepo;
 
-    // ====================================
+    // =============== environment setup ===============
 
+    /**
+     * Clear all instances. Run this independently before {@link #setup()} to ensure a flush.
+     */
+    // TODO: 2020/3/22 zjl one method to do both clear and setup
     @Test
-    public void setup() {
+    public void clear() {
         firstClassRepo.deleteAll();
         secondClassRepo.deleteAll();
-        classRelationRepo.deleteAll();
+    }
+
+    /**
+     * Setup one instance for each class and a relation between them.
+     */
+    @Test
+    public void setup() {
         FirstClass firstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("foo1").build();
         firstClassInstance = firstClassRepo.save(firstClassInstance);
         SecondClass secondClassInstance = SecondClass.builder().keyField("secondClassKey1").build();
@@ -56,34 +67,26 @@ public class Tests {
         firstClassInstance.addSecondClass(secondClassInstance);
     }
 
-    @Test
-    public void clear() {
-        firstClassRepo.deleteAll();
-        secondClassRepo.deleteAll();
-        classRelationRepo.deleteAll();
-    }
-
-    // ====================================
+    // =============== test cases ===============
 
     /**
      * In this example, orphan removal works and when removing relation in first class, relation in second class also get removed.
      */
     @Test
     public void checkRemove() {
-        Optional<FirstClass> optionalOldInstance = firstClassRepo.findByKeyField("firstClassKey1");
-        if (optionalOldInstance.isPresent()) {
-            FirstClass oldFirstClassInstance = optionalOldInstance.get();
-            oldFirstClassInstance.clearRelations();
-        }
+        firstClassRepo.findByKeyField("firstClassKey1")
+                .ifPresent(FirstClass::clearRelations);
     }
 
     /**
-     * 新的 entity 中关联关系的实体先 persist 了, 之后只要将新 entity id 赋值为旧 entity 的 id, 直接存新 entity 即可
+     * Without flush nor old relation.
+     * After this there's only one relation in DB, which is between new instances.
+     * It means that our {@link FirstClass#clearRelations()} in {@link FirstClassService#wrongUpdate(FirstClass)} works.
      */
     @Test
-    public void checkReplace() {
+    public void withoutFlushNorOldRelation() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.update(newFirstClassInstance);
+        newFirstClassInstance = firstClassService.wrongUpdate(newFirstClassInstance);
 
         SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
         newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
@@ -91,7 +94,49 @@ public class Tests {
         newFirstClassInstance.addSecondClass(newSecondClassInstance);
     }
 
-    // ====================================
+    /**
+     * Without flush, but this time we kept the old relation.
+     * An Exception will be thrown saying 'deleted object would be re-saved by cascade'
+     * It's because although we saved the updated first class instance, it's not flushed yet, and the second class instance
+     * we aquired will still be bolding the old (should been deleted) relation.
+     * <p>
+     * For a correct use case see {@link #withFlushWithOldRelation()}
+     */
+    @Test
+    public void withoutFlushWithOldRelation() {
+        FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
+        newFirstClassInstance = firstClassService.wrongUpdate(newFirstClassInstance);
+        // 上一步 clear 了 relation, 但是这里取出来的 second class 里还是带有 relation, 因为还没 flush
+        SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
+                .orElseThrow(EntityNotFoundException::new);
+
+        SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
+        newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
+
+        newFirstClassInstance.addSecondClass(oldSecondClassInstance);
+        newFirstClassInstance.addSecondClass(newSecondClassInstance);
+    }
+
+    /**
+     * The most important test case.
+     * Core is {@link org.springframework.data.jpa.repository.JpaRepository#saveAndFlush(Object)}
+     * For more details check <a href="https://www.baeldung.com/spring-data-jpa-save-saveandflush">Save and SaveAndFlush</a>
+     */
+    @Test
+    public void withFlushWithOldRelation() {
+        FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
+        newFirstClassInstance = firstClassService.correctUpdate(newFirstClassInstance);
+
+        SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
+                .orElseThrow(EntityNotFoundException::new);
+        SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
+        newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
+
+        newFirstClassInstance.addSecondClass(oldSecondClassInstance);
+        newFirstClassInstance.addSecondClass(newSecondClassInstance);
+    }
+
+    // =============== printers ===============
 
     private void pringAllRelations() {
         System.out.println();

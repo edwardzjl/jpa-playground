@@ -1,5 +1,6 @@
 package org.zjl.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
 
@@ -30,10 +31,11 @@ public class FirstClass {
     @Column(name = "foo_field")
     private String fooField;
 
+    @JsonIgnore
     @Builder.Default
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToMany(mappedBy = "firstClass", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = ClassRelation_.FIRST_CLASS, fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ClassRelation> secondClassInstances = new HashSet<>();
 
     public void addSecondClass(SecondClass instance) {
@@ -46,6 +48,11 @@ public class FirstClass {
         secondClassInstances.forEach(relation ->
                 relation.getSecondClass().getFirstClassInstances().remove(relation));
         secondClassInstances.clear();
+    }
+
+    @PreRemove
+    private void onRemove() {
+        clearRelations();
     }
 
 }
