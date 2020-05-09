@@ -12,9 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.zjl.jpa.playground.dao.ClassRelationRepo;
 import org.zjl.jpa.playground.dao.FirstClassRepo;
 import org.zjl.jpa.playground.dao.SecondClassRepo;
-import org.zjl.jpa.playground.service.FirstClassServiceImpl;
 import org.zjl.jpa.playground.model.FirstClass;
 import org.zjl.jpa.playground.model.SecondClass;
+import org.zjl.jpa.playground.service.FirstClassService;
+import org.zjl.jpa.playground.service.FirstClassServiceImpl;
+import org.zjl.jpa.playground.service.SecondClassService;
 
 import javax.persistence.EntityNotFoundException;
 
@@ -39,7 +41,9 @@ public class Tests {
     @Autowired
     private SecondClassRepo secondClassRepo;
     @Autowired
-    private FirstClassServiceImpl firstClassService;
+    private FirstClassService firstClassService;
+    @Autowired
+    private SecondClassService secondClassService;
     @Autowired
     private ClassRelationRepo classRelationRepo;
 
@@ -74,7 +78,7 @@ public class Tests {
      */
     @Test
     public void safeUpdate() {
-        FirstClass firstClassInstance = FirstClass. builder().keyField("firstClassKey1").fooField("foo1").build();
+        FirstClass firstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("foo1").build();
         firstClassService.updateWithoutFlush(firstClassInstance);
     }
 
@@ -143,6 +147,26 @@ public class Tests {
 
         newFirstClassInstance.addSecondClass(oldSecondClassInstance);
         newFirstClassInstance.addSecondClass(newSecondClassInstance);
+    }
+
+    /**
+     * this time, we create a new Entity, which was already persisted in db with its relation.
+     * It works because our {@link org.zjl.jpa.playground.model.ClassRelation} implements its equals and hashcode on its Id.
+     */
+    @Test
+    public void withNewlyCreatedOldRelation() {
+        FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
+        newFirstClassInstance = firstClassService.updateWithFlush(newFirstClassInstance);
+        // this is an "old entity" which already exists in db. Its relation also exists.
+        SecondClass existedSecondClassInstance = SecondClass.builder().keyField("secondClassKey1").build();
+        existedSecondClassInstance = secondClassService.updateWithFlush(existedSecondClassInstance);
+        // this is a new entity
+        SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
+        newSecondClassInstance = secondClassService.updateWithFlush(newSecondClassInstance);
+        // add both to first instance.
+        newFirstClassInstance.addSecondClass(existedSecondClassInstance);
+        newFirstClassInstance.addSecondClass(newSecondClassInstance);
+        // we don't even need to save, as newFirstClassInstance was a managed entity
     }
 
     // =============== printers ===============
