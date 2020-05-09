@@ -58,6 +58,7 @@ public class Tests {
     /**
      * Setup one instance for each class and a relation between them.
      */
+    @javax.transaction.Transactional
     @Test
     public void setup() {
         FirstClass firstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("foo1").build();
@@ -124,6 +125,20 @@ public class Tests {
      */
     @Test
     public void withFlushWithOldRelation() {
+        FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
+        newFirstClassInstance = firstClassService.correctUpdate(newFirstClassInstance);
+
+        SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
+                .orElseThrow(EntityNotFoundException::new);
+        SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
+        newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
+
+        newFirstClassInstance.addSecondClass(oldSecondClassInstance);
+        newFirstClassInstance.addSecondClass(newSecondClassInstance);
+    }
+
+    @Test
+    public void withFlushWithOldRelation2() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
         newFirstClassInstance = firstClassService.correctUpdate(newFirstClassInstance);
 
