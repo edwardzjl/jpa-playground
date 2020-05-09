@@ -58,7 +58,6 @@ public class Tests {
     /**
      * Setup one instance for each class and a relation between them.
      */
-    @javax.transaction.Transactional
     @Test
     public void setup() {
         FirstClass firstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("foo1").build();
@@ -69,6 +68,15 @@ public class Tests {
     }
 
     // =============== test cases ===============
+
+    /**
+     *
+     */
+    @Test
+    public void safeUpdate() {
+        FirstClass firstClassInstance = FirstClass. builder().keyField("firstClassKey1").fooField("foo1").build();
+        firstClassService.updateWithoutFlush(firstClassInstance);
+    }
 
     /**
      * In this example, orphan removal works and when removing relation in first class, relation in second class also get removed.
@@ -125,20 +133,6 @@ public class Tests {
      */
     @Test
     public void withFlushWithOldRelation() {
-        FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.updateWithFlush(newFirstClassInstance);
-
-        SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
-                .orElseThrow(EntityNotFoundException::new);
-        SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
-        newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
-
-        newFirstClassInstance.addSecondClass(oldSecondClassInstance);
-        newFirstClassInstance.addSecondClass(newSecondClassInstance);
-    }
-
-    @Test
-    public void withFlushWithOldRelation2() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
         newFirstClassInstance = firstClassService.updateWithFlush(newFirstClassInstance);
 
