@@ -1,4 +1,4 @@
-package org.zjl.model;
+package org.zjl.jpa.playground.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;

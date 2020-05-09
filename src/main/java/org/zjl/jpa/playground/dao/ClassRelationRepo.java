@@ -1,8 +1,8 @@
-package org.zjl.dao;
+package org.zjl.jpa.playground.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.zjl.model.ClassRelation;
+import org.zjl.jpa.playground.model.ClassRelation;
 
 /**
  * @author Junlin Zhou

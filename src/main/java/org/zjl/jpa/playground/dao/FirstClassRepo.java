@@ -1,9 +1,9 @@
-package org.zjl.dao;
+package org.zjl.jpa.playground.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
-import org.zjl.model.FirstClass;
+import org.zjl.jpa.playground.model.FirstClass;
 
 import java.util.Optional;
 

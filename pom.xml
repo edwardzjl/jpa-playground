@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.zjl</groupId>
-    <artifactId>jpa-relation-playground</artifactId>
+    <artifactId>jpa-playground</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -68,9 +68,7 @@
     </dependencies>
 
     <build>
-
         <plugins>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>

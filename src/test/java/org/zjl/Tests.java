@@ -9,14 +9,14 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
-import org.zjl.dao.ClassRelationRepo;
-import org.zjl.dao.FirstClassRepo;
-import org.zjl.dao.SecondClassRepo;
-import org.zjl.model.FirstClass;
-import org.zjl.model.SecondClass;
+import org.zjl.jpa.playground.dao.ClassRelationRepo;
+import org.zjl.jpa.playground.dao.FirstClassRepo;
+import org.zjl.jpa.playground.dao.SecondClassRepo;
+import org.zjl.jpa.playground.service.FirstClassServiceImpl;
+import org.zjl.jpa.playground.model.FirstClass;
+import org.zjl.jpa.playground.model.SecondClass;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.Optional;
 
 
 /**
@@ -39,7 +39,7 @@ public class Tests {
     @Autowired
     private SecondClassRepo secondClassRepo;
     @Autowired
-    private FirstClassService firstClassService;
+    private FirstClassServiceImpl firstClassService;
     @Autowired
     private ClassRelationRepo classRelationRepo;
 
@@ -82,12 +82,12 @@ public class Tests {
     /**
      * Without flush nor old relation.
      * After this there's only one relation in DB, which is between new instances.
-     * It means that our {@link FirstClass#clearRelations()} in {@link FirstClassService#wrongUpdate(FirstClass)} works.
+     * It means that our {@link FirstClass#clearRelations()} in {@link FirstClassServiceImpl#updateWithoutFlush(FirstClass)} works.
      */
     @Test
     public void withoutFlushNorOldRelation() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.wrongUpdate(newFirstClassInstance);
+        newFirstClassInstance = firstClassService.updateWithoutFlush(newFirstClassInstance);
 
         SecondClass newSecondClassInstance = SecondClass.builder().keyField("newKey2").build();
         newSecondClassInstance = secondClassRepo.save(newSecondClassInstance);
@@ -106,7 +106,7 @@ public class Tests {
     @Test
     public void withoutFlushWithOldRelation() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.wrongUpdate(newFirstClassInstance);
+        newFirstClassInstance = firstClassService.updateWithoutFlush(newFirstClassInstance);
         // 上一步 clear 了 relation, 但是这里取出来的 second class 里还是带有 relation, 因为还没 flush
         SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
                 .orElseThrow(EntityNotFoundException::new);
@@ -126,7 +126,7 @@ public class Tests {
     @Test
     public void withFlushWithOldRelation() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.correctUpdate(newFirstClassInstance);
+        newFirstClassInstance = firstClassService.updateWithFlush(newFirstClassInstance);
 
         SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
                 .orElseThrow(EntityNotFoundException::new);
@@ -140,7 +140,7 @@ public class Tests {
     @Test
     public void withFlushWithOldRelation2() {
         FirstClass newFirstClassInstance = FirstClass.builder().keyField("firstClassKey1").fooField("newFoo").build();
-        newFirstClassInstance = firstClassService.correctUpdate(newFirstClassInstance);
+        newFirstClassInstance = firstClassService.updateWithFlush(newFirstClassInstance);
 
         SecondClass oldSecondClassInstance = secondClassRepo.findByKeyField("secondClassKey1")
                 .orElseThrow(EntityNotFoundException::new);
