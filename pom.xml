@@ -41,7 +41,7 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <!-- may need to remove -->
-            <version>1.4.200</version>
+            <version>2.0.206</version>
             <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
